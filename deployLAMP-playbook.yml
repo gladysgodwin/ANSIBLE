@@ -1,0 +1,67 @@
+- name: Install LAMP stack using Ansible
+  hosts: webservers
+  become: true
+  vars:
+    db_name: mydatabase
+    db_user: root
+    db_password: mysql246
+
+  tasks:
+    #Update your apt
+    - name: update apt
+      command: apt update -y
+
+    #Upgrade the apt
+    - name: upgrade apt
+      command: apt upgrade -y
+
+    #Install the Apache2
+    - name: Installing apache2 server
+      command: apt install apache2 -y
+
+    #Install MySQL server
+    - name: Install mySQL server
+      command: apt install mysql_server -y
+
+    #Start Apache2
+    - name: Start apache2
+      service:
+        name: Apache2
+        enabled: yes
+        state: started
+
+    #Start mySQL
+    - name: Start mysql_server
+      service:
+        name: mysql_server
+        enabled: yes
+        state: started
+
+    #Create Database for mysql
+    - name: Creating Database for mysql
+      mysql_db: name={{db_user}} password={{db_password}} encrypted=yes priv={{db_name}}.*:ALL state=present
+
+    #Enable remote Login to mysql
+    - name: Enabling remote Login for mysql
+      lineinfile:
+        path: /etc/mysql/mysql.conf.conf.d/mysqld.cnf
+        Regexp: "^bind-address"
+        line: "bind-address:192.168.56.8"
+      notify: -restart mysql
+    #Restart mysql
+    - name: Restarting mysql
+      service:
+        name: mysql
+        state: restarted
+
+    #Installing the required requisites
+    - name: Install the required requisites
+      command: apt install apt-transport-https lsb-release software-properties-common ca-certificates -y
+
+    #Installing using php7.4
+    - name: install php7.4
+      command: apt install php7.4 -y
+
+    #Verify the php7.4 installation
+    - name: verify the php installation
+      command: php -v
